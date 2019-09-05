@@ -1,3 +1,36 @@
+load("Z:\\Programs\\SHC\\2_Projects\\085_TrinityRiverDischarge\\06_Trinity_Q\\histQ.RData")
+histQ[,c(1,2,3,4,5,6,8)] -> histQ
+
+
+GetProperQdf <- function(inDate){
+  #  Returns the correct data frame for date
+  out = 0
+  if(inDate < histQ.StartDate){
+    out <- -1 
+    } else if(inDate < histQ.EndDate){
+    out <- histQ  
+    } else if(inDate < usgsQ.EndDate){
+    out <- usgsQ  
+    } else if (inDate < trrpQ0218.EndDate){
+    out <- trrpQ0218
+    } else { out <- -2}
+   return(out)
+}
+
+GetQ <- function(inDate){
+  df <- GetProperQdf(inDate)
+  indx <- GetIndexFromDate(df,inDate)
+  return(df$Q[indx])
+  
+}
+
+GetQdf <- function(inHYDF,inDate){
+  indx <- GetIndexFromDate(inHYDF,inDate)
+  return(inHYDF$Q[indx])
+  
+}
+
+
 AddLeapYearDay <- function(inHYDF){
   HY99 <- inHYDF[300,]
   HY99
@@ -9,9 +42,9 @@ AddLeapYearDay <- function(inHYDF){
   HY99$Q <- (Q1 + Q2)/2
   nuDate <- paste(HY99$Y,HY99$M,HY99$D)
   #print(nuDate)
-
+  
   HY99$YMD <- ymd(nuDate)
-    #  151 & 152
+  #  151 & 152
   outDF <- rbind(inHYDF,HY99)
   outDF <- outDF[order(outDF$YMD),]
   outDF$DoY <- seq(1,366)
@@ -19,6 +52,19 @@ AddLeapYearDay <- function(inHYDF){
   return( outDF )
   
 }
+
+GetIndexFromDate <- function(inHY,inDate){
+  startDate <- min(inHY$YMD)
+  endDate <- max(inHY$YMD)
+  out <- 1
+  if(inDate < startDate){ out <- -1 }
+  if(inDate > endDate){ out <- -2 }
+  if(out > 0){
+    out <- inDate - startDate
+  }
+  return(as.integer(out)+1)
+}
+
 
 
 cbind(dfQ[,1:4],dfQ$HY1912) -> HY1912
